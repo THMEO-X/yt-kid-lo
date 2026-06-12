@@ -2,7 +2,8 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1370990465704267868/KwmrTXYijB-V_EWZIwnJeCUspEkvfr5PcboBfdzkEEOz6x3w2O0bom1srVnpanrxkRu8";
+const WEBHOOK_URL =  "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
+
 let lastUrl = "";
 
 async function uploadImage(imageUrl) {
@@ -57,7 +58,7 @@ async function uploadImage(imageUrl) {
             `"${cdnUrl}"\n` + oldData
         );
 
-        console.log("[UPLOADED]", cdnUrl);
+        
 
     } catch (err) {
         console.error(
