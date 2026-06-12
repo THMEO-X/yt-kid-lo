@@ -60,11 +60,12 @@ async function uploadImage(imageUrl) {
 
         
 
- } catch (err) {
-    console.error("[ERROR]", err.message);
-    console.error("URL:", imageUrl);
-    console.error("STATUS:", err.response?.status);
-}
+    } catch (err) {
+        console.error(
+            "[ERROR]",
+            err.message
+        );
+    }
 }
 
 function check() {
