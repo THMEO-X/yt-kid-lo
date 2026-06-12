@@ -1,12 +1,13 @@
 const express = require("express");
 const fs = require("fs");
 const os = require("os");
-const ytdl = require("@distube/ytdl-core");
-
+const axios = require("axios");
+require("dotenv").config();
+ 
 function keepAlive() {
 
     const app = express();
-    const port = 3000;
+   const port = process.env.PORT || 3000;
     const envPath = ".env";
 
     app.use(express.urlencoded({ extended: true }));
@@ -93,7 +94,21 @@ ${result}
 </body>
 </html>
 `;
+
     }
+
+function parseISO8601Duration(duration) {
+
+    const match = duration.match(
+        /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
+    );
+
+    return (
+        (parseInt(match?.[1] || 0) * 3600) +
+        (parseInt(match?.[2] || 0) * 60) +
+        parseInt(match?.[3] || 0)
+    );
+}
 
     app.get("/", (req, res) => {
         res.send(page());
@@ -153,50 +168,79 @@ ${result}
 
             const url = req.body.youtube;
 
-            if (!ytdl.validateURL(url)) {
+            const videoId =
+    url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+            if (!videoId) {
                 return res.send(page(`
                     <hr>
                     <p>❌ Link YouTube không hợp lệ</p>
                 `));
             }
+
             let oldUrlData = "";
 
-if (fs.existsSync("url.js")) {
-    oldUrlData = fs.readFileSync(
-        "url.js",
-        "utf8"
+            if (fs.existsSync("url.js")) {
+                oldUrlData = fs.readFileSync(
+                    "url.js",
+                    "utf8"
+                );
+            }
+
+            fs.writeFileSync(
+                "url.js",
+                `"${url}"\n` + oldUrlData
+            );
+
+            const apiKey = process.env.YOUTUBE_API_KEY;
+            if (!apiKey) {
+    throw new Error(
+        "Chưa cấu hình YOUTUBE_API_KEY trong .env"
     );
 }
 
-fs.writeFileSync(
-    "url.js",
-    `"${url}"\n` + oldUrlData
+const response = await axios.get(
+    "https://www.googleapis.com/youtube/v3/videos",
+    {
+        params: {
+            part: "snippet,contentDetails",
+            id: videoId,
+            key: apiKey
+        }
+    }
 );
 
-            const info = await ytdl.getBasicInfo(url);
+if (!response.data.items.length) {
+    throw new Error("Không tìm thấy video");
+}
 
-            const title = info.videoDetails.title;
-            const videoId = info.videoDetails.videoId;
+const video = response.data.items[0];
+
+const title =
+    video.snippet.title;
 
 const imageUrl =
-    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    video.snippet.thumbnails.maxres?.url ||
+    video.snippet.thumbnails.high?.url ||
+    video.snippet.thumbnails.medium?.url ||
+    video.snippet.thumbnails.default?.url;
 
-let oldImageData = "";
-
-if (fs.existsSync("imyt.js")) {
-    oldImageData = fs.readFileSync(
-        "imyt.js",
-        "utf8"
+const seconds =
+    parseISO8601Duration(
+        video.contentDetails.duration
     );
-}
 
-fs.writeFileSync(
-    "imyt.js",
-    `"${imageUrl}"\n` + oldImageData
-);
+            let oldImageData = "";
 
-            const seconds = parseInt(
-                info.videoDetails.lengthSeconds
+            if (fs.existsSync("imyt.js")) {
+                oldImageData = fs.readFileSync(
+                    "imyt.js",
+                    "utf8"
+                );
+            }
+
+            fs.writeFileSync(
+                "imyt.js",
+                `"${imageUrl}"\n` + oldImageData
             );
 
             const duration = formatDuration(seconds);
@@ -222,20 +266,21 @@ fs.writeFileSync(
                 timeString =
                     `"${secs} * 1000"`;
 
-            }                                     
+            }
+
             let oldData = "";
 
-if (fs.existsSync("timenev.js")) {
-    oldData = fs.readFileSync(
-        "timenev.js",
-        "utf8"
-    );
-}
+            if (fs.existsSync("timenev.js")) {
+                oldData = fs.readFileSync(
+                    "timenev.js",
+                    "utf8"
+                );
+            }
 
-fs.writeFileSync(
-    "timenev.js",
-    timeString + "\n" + oldData
-);
+            fs.writeFileSync(
+                "timenev.js",
+                timeString + "\n" + oldData
+            );
 
             res.send(page(`
                 <hr>
@@ -245,16 +290,17 @@ fs.writeFileSync(
                 <pre>${timeString}</pre>
             `));
 
-} catch (err) {
-    console.log(err);
-    console.log(err.stack);
+        } catch (err) {
 
-    res.send(page(`
-        <hr>
-        <p>❌ ${err.message}</p>
-    `));
-}
-           
+            console.log(err);
+            console.log(err.stack);
+
+            res.send(page(`
+                <hr>
+                <p>❌ ${err.message}</p>
+            `));
+        }
+
     });
 
     app.listen(port, () => {
@@ -276,7 +322,8 @@ fs.writeFileSync(
 
         console.log("🚀 Server đang chạy");
         console.log(`👉 Local: http://localhost:${port}`);
-        console.log(`👉 Network: http://${ip}:${port}`);                                                });
+        console.log(`👉 Network: http://${ip}:${port}`);
+    });
 }
 
 module.exports = keepAlive;
