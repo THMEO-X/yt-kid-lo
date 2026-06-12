@@ -12,15 +12,12 @@ async function uploadImage(imageUrl) {
         console.log("[NEW]", imageUrl);
 
         const image = await axios.get(
-    imageUrl,
-    {
-        responseType: "arraybuffer",
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0.0.0 Safari/537.36"
-        }
-    }
-);
+            imageUrl,
+            {
+                responseType: "arraybuffer"
+            }
+        );
+
         const form = new FormData();
 
         form.append(
@@ -65,8 +62,22 @@ async function uploadImage(imageUrl) {
 
  } catch (err) {
     console.error("[ERROR]", err.message);
-    console.error("URL:", imageUrl);
-    console.error("STATUS:", err.response?.status);
+
+    console.error("URL:",
+        err.config?.url
+    );
+
+    console.error("STATUS:",
+        err.response?.status
+    );
+
+    console.error("DATA:",
+        err.response?.data
+    );
+
+    console.error("HEADERS:",
+        err.response?.headers
+    );
 }
 }
 
