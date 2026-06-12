@@ -218,12 +218,15 @@ const video = response.data.items[0];
 const title =
     video.snippet.title;
 
-const imageUrl =
-    video.snippet.thumbnails.maxres?.url ||
-    video.snippet.thumbnails.high?.url ||
-    video.snippet.thumbnails.medium?.url ||
-    video.snippet.thumbnails.default?.url;
+let imageUrl =
+    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
+try {
+    await axios.head(imageUrl);
+} catch {
+    imageUrl =
+        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
 const seconds =
     parseISO8601Duration(
         video.contentDetails.duration
@@ -292,8 +295,15 @@ const seconds =
 
         } catch (err) {
 
-            console.log(err);
-            console.log(err.stack);
+    console.log("MESSAGE:", err.message);
+
+    if (err.response) {
+        console.log("STATUS:", err.response.status);
+        console.log("DATA:", err.response.data);
+        console.log("URL:", err.config?.url);
+    }
+
+    console.log(err.stack);
 
             res.send(page(`
                 <hr>
