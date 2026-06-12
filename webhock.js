@@ -2,139 +2,162 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const WEBHOOK_URL =  "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
+const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_WEBHOOK";
+const INPUT_FILE = "imyt.js";
+const OUTPUT_FILE = "imdis.js";
 
-let lastUrl = "";
+let queue = [];
+let processing = false;
 
-async function uploadImage(imageUrl) {
+// chống spam watchFile
+let debounceTimer = null;
+
+// =====================
+// ADD QUEUE (CHO PHÉP TRÙNG URL)
+// =====================
+function addToQueue(url) {
+    if (!url) return;
+
+    queue.push(url); // KHÔNG check trùng nữa
+    processQueue();
+}
+
+// =====================
+// PROCESS QUEUE
+// =====================
+async function processQueue() {
+    if (processing) return;
+    processing = true;
+
+    while (queue.length > 0) {
+        const url = queue.shift();
+
+        await uploadImage(url);
+
+        // chống 429 Discord
+        await sleep(2500);
+    }
+
+    processing = false;
+}
+
+// =====================
+// UPLOAD IMAGE + RETRY
+// =====================
+async function uploadImage(imageUrl, retry = 3) {
     try {
-
         console.log("[NEW]", imageUrl);
 
-        const image = await axios.get(
-            imageUrl,
-            {
-                responseType: "arraybuffer"
+        const image = await axios.get(imageUrl, {
+            responseType: "arraybuffer",
+            timeout: 15000,
+            headers: {
+                "User-Agent": "Mozilla/5.0"
             }
-        );
+        });
 
         const form = new FormData();
 
         form.append(
             "file",
             Buffer.from(image.data),
-            "youtube.jpg"
+            "image.jpg"
         );
 
         const response = await axios.post(
             WEBHOOK_URL + "?wait=true",
             form,
             {
-                headers: form.getHeaders()
+                headers: form.getHeaders(),
+                timeout: 15000
             }
         );
 
-        const attachment =
-            response.data.attachments?.[0];
+        const attachment = response.data.attachments?.[0];
 
         if (!attachment) {
-            console.log("Không lấy được CDN URL");
+            console.log("[ERROR] No attachment");
             return;
         }
 
         const cdnUrl = attachment.url;
 
-        let oldData = "";
+        saveToFile(cdnUrl);
 
-        if (fs.existsSync("imdis.js")) {
-            oldData = fs.readFileSync(
-                "imdis.js",
-                "utf8"
-            );
-        }
-
-        fs.writeFileSync(
-            "imdis.js",
-            `"${cdnUrl}"\n` + oldData
-        );
-
-        
-
- } catch (err) {
-    console.error("[ERROR]", err.message);
-
-    console.error("URL:",
-        err.config?.url
-    );
-
-    console.error("STATUS:",
-        err.response?.status
-    );
-
-    console.error("DATA:",
-        err.response?.data
-    );
-
-    console.error("HEADERS:",
-        err.response?.headers
-    );
-}
-}
-
-function check() {
-
-    try {
-
-        if (!fs.existsSync("imyt.js")) {
-            return;
-        }
-
-        const lines = fs
-            .readFileSync(
-                "imyt.js",
-                "utf8"
-            )
-            .split("\n")
-            .filter(x => x.trim());
-
-        if (!lines.length) {
-            return;
-        }
-
-        const newest = lines[0]
-            .replace(/"/g, "")
-            .trim();
-
-        if (!newest) {
-            return;
-        }
-
-        if (newest === lastUrl) {
-            return;
-        }
-
-        lastUrl = newest;
-
-        uploadImage(newest);
+        console.log("[UPLOADED]", cdnUrl);
 
     } catch (err) {
-        console.error(
-            "[CHECK ERROR]",
-            err.message
-        );
+        console.error("[UPLOAD ERROR]", err.message);
+
+        if (retry > 0) {
+            console.log("[RETRY]", retry);
+            await sleep(3000);
+            return uploadImage(imageUrl, retry - 1);
+        }
     }
 }
 
-check();
+// =====================
+// SAVE FILE (LIMIT 50 LINES)
+// =====================
+function saveToFile(url) {
+    let oldData = "";
 
-fs.watchFile(
-    "imyt.js",
-    {
-        interval: 1000
-    },
-    check
-);
+    if (fs.existsSync(OUTPUT_FILE)) {
+        oldData = fs.readFileSync(OUTPUT_FILE, "utf8");
+    }
 
-console.log(
-    "Đang theo dõi imyt.js..."
-);
+    let list = oldData
+        .split("\n")
+        .filter(Boolean);
+
+    list.unshift(`"${url}"`);
+
+    list = list.slice(0, 50);
+
+    fs.writeFileSync(OUTPUT_FILE, list.join("\n"));
+}
+
+// =====================
+// CHECK FILE
+// =====================
+function checkFile() {
+    try {
+        if (!fs.existsSync(INPUT_FILE)) return;
+
+        const lines = fs.readFileSync(INPUT_FILE, "utf8")
+            .split("\n")
+            .filter(Boolean);
+
+        if (!lines.length) return;
+
+        const newest = lines[0].replace(/"/g, "").trim();
+
+        if (!newest) return;
+
+        addToQueue(newest);
+
+    } catch (err) {
+        console.error("[CHECK ERROR]", err.message);
+    }
+}
+
+// =====================
+// WATCH FILE (DEBOUNCE)
+// =====================
+fs.watchFile(INPUT_FILE, { interval: 1500 }, () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+        checkFile();
+    }, 800);
+});
+
+// =====================
+function sleep(ms) {
+    return new Promise(res => setTimeout(res, ms));
+}
+
+// =====================
+console.log("Đang theo dõi file (TRÙNG URL OK + ANTI 429)...");
+checkFile();
