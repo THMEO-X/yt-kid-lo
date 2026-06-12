@@ -1,3 +1,6 @@
+"https://cdn.discordapp.com/attachments/1371007460533473292/1514966826633920632/youtube.jpg?ex=6a2d4a4e&is=6a2bf8ce&hm=b7ab66f9f37a5d958910f41744f3298371116853dda6fae8ff8c38366de5f803&"
+"https://cdn.discordapp.com/attachments/1371007460533473292/1514966637059768490/youtube.jpg?ex=6a2d4a20&is=6a2bf8a0&hm=dd41dffe54d3936b2822a3a1a8f61229bbf744d0f319c63ff1d47c3357ceab31&"
+"https://cdn.discordapp.com/attachments/1371007460533473292/1514966316849565767/youtube.jpg?ex=6a2d49d4&is=6a2bf854&hm=176dc4d1f85b145002ff368f65dcffcdda3fabfa1b52a8e831a60d1a0dff3b5c&"
 "https://cdn.discordapp.com/attachments/1371007460533473292/1514931412523024494/youtube.jpg?ex=6a2d2952&is=6a2bd7d2&hm=9cbd9fc558628ef3b97c44bef43ba3d84ccb22da6ceecffc9e212dfb6f82d716&"
 "https://cdn.discordapp.com/attachments/1371007460533473292/1514931223980539934/youtube.jpg?ex=6a2d2925&is=6a2bd7a5&hm=efad143ba0e96ba31bbe4618217bc24e96c01923fe0255c672b7b8860dc637dd&"
 "https://cdn.discordapp.com/attachments/1371007460533473292/1514930214382342216/youtube.jpg?ex=6a2d2835&is=6a2bd6b5&hm=e1cef4eba99325e886611bdb29bc13c8d5ebf5f0c5f09612312f2390eac736bb&"

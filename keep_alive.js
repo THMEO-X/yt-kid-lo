@@ -218,15 +218,9 @@ const video = response.data.items[0];
 const title =
     video.snippet.title;
 
-let imageUrl =
-    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-
-try {
-    await axios.head(imageUrl);
-} catch {
-    imageUrl =
-        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-}
+const imageUrl =
+    video.snippet.thumbnails.high?.url ||
+    video.snippet.thumbnails.default?.url;
 const seconds =
     parseISO8601Duration(
         video.contentDetails.duration
