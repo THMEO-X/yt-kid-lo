@@ -245,14 +245,16 @@ fs.writeFileSync(
                 <pre>${timeString}</pre>
             `));
 
-        } catch (err) {
+} catch (err) {
+    console.log(err);
+    console.log(err.stack);
 
-            res.send(page(`
-                <hr>
-                <p>❌ ${err.message}</p>
-            `));
-
-        }
+    res.send(page(`
+        <hr>
+        <p>❌ ${err.message}</p>
+    `));
+}
+           
     });
 
     app.listen(port, () => {
