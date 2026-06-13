@@ -2,7 +2,7 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const WEBHOOK_URL =  "https://discord.com/api/webhooks/1370990469986914396/2eSQecfWjuE3dZiDTC5Hx5Ip3DI6i6CtZq2Utb2OJFbBQPXdEjFUgemkzqNKWcbD5Lv6";
+const WEBHOOK_URL =  "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
 
 let lastUrl = "";
 
@@ -58,16 +58,13 @@ async function uploadImage(imageUrl) {
             `"${cdnUrl}"\n` + oldData
         );
 
-        
+
 
     } catch (err) {
-    if (err.response) {
-        console.log("Status:", err.response.status);
-        console.log("Data:", err.response.data);
-        console.log("Headers:", err.response.headers);
-    } else {
-        console.log(err.message);
-    }
+        console.error(
+            "[ERROR]",
+            err.message
+        );
     }
 }
 
