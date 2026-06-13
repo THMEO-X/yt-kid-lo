@@ -2,19 +2,34 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const WEBHOOK_URL =  "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
 
 let lastUrl = "";
+let uploading = false;
+let sendCount = 0;
 
 async function uploadImage(imageUrl) {
+
+    console.log("[UPLOAD START]", imageUrl);
+
+    if (uploading) {
+        console.log("[SKIP] Upload đang chạy");
+        return;
+    }
+
+    uploading = true;
+
     try {
 
-        console.log("[NEW]", imageUrl);
+        sendCount++;
+
+        console.log(`[SEND #${sendCount}]`, imageUrl);
 
         const image = await axios.get(
             imageUrl,
             {
-                responseType: "arraybuffer"
+                responseType: "arraybuffer",
+                timeout: 30000
             }
         );
 
@@ -30,7 +45,8 @@ async function uploadImage(imageUrl) {
             WEBHOOK_URL + "?wait=true",
             form,
             {
-                headers: form.getHeaders()
+                headers: form.getHeaders(),
+                timeout: 30000
             }
         );
 
@@ -38,7 +54,9 @@ async function uploadImage(imageUrl) {
             response.data.attachments?.[0];
 
         if (!attachment) {
-            console.log("Không lấy được CDN URL");
+            console.log(
+                "[ERROR] Không lấy được CDN URL"
+            );
             return;
         }
 
@@ -58,21 +76,63 @@ async function uploadImage(imageUrl) {
             `"${cdnUrl}"\n` + oldData
         );
 
-
+        console.log(
+            "[UPLOAD SUCCESS]",
+            cdnUrl
+        );
 
     } catch (err) {
-        console.error(
-            "[ERROR]",
-            err.message
-        );
+
+        console.log("////////////////////////////////////////////////////////");
+
+        if (err.response) {
+
+            console.log(
+                "Status:",
+                err.response.status
+            );
+
+            console.log(
+                "Data:",
+                err.response.data
+            );
+
+            console.log(
+                "Headers:",
+                err.response.headers
+            );
+
+        } else {
+
+            console.log(
+                "[ERROR]",
+                err.message
+            );
+
+        }
+
+    } finally {
+
+        uploading = false;
+
+        console.log("[UPLOAD END]");
+
     }
 }
 
 function check() {
 
+    console.log(
+        "[CHECK]",
+        new Date().toISOString()
+    );
+
     try {
 
         if (!fs.existsSync("imyt.js")) {
+            console.log(
+                "[INFO] imyt.js chưa tồn tại"
+            );
             return;
         }
 
@@ -85,6 +145,9 @@ function check() {
             .filter(x => x.trim());
 
         if (!lines.length) {
+            console.log(
+                "[INFO] imyt.js rỗng"
+            );
             return;
         }
 
@@ -92,23 +155,43 @@ function check() {
             .replace(/"/g, "")
             .trim();
 
+        console.log(
+            "[COMPARE]",
+            "new =",
+            newest,
+            "| last =",
+            lastUrl
+        );
+
         if (!newest) {
             return;
         }
 
         if (newest === lastUrl) {
+
+            console.log(
+                "[SKIP] URL trùng"
+            );
+
             return;
         }
 
         lastUrl = newest;
 
+        console.log(
+            "[NEW URL]",
+            newest
+        );
+
         uploadImage(newest);
 
     } catch (err) {
-        console.error(
+
+        console.log(
             "[CHECK ERROR]",
             err.message
         );
+
     }
 }
 
@@ -119,7 +202,15 @@ fs.watchFile(
     {
         interval: 1000
     },
-    check
+    () => {
+
+        console.log(
+            "[WATCH EVENT]"
+        );
+
+        check();
+
+    }
 );
 
 console.log(
