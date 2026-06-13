@@ -2,7 +2,7 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_WEBHOOK";
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1355134247974731777/6ha_PLkzz7csiWQ5bkMDGZVitbCK4-WbFALeQehvCz7EfTofaDjLLX4_itq6nDPjNOzS";
 
 let queue = [];
 let running = false;
