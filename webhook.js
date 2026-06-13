@@ -61,10 +61,13 @@ async function uploadImage(imageUrl) {
         
 
     } catch (err) {
-        console.error(
-            "[ERROR]",
-            err.message
-        );
+    if (err.response) {
+        console.log("Status:", err.response.status);
+        console.log("Data:", err.response.data);
+        console.log("Headers:", err.response.headers);
+    } else {
+        console.log(err.message);
+    }
     }
 }
 
